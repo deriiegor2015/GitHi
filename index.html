@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>GitHi</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; }
+header { background: #24292e; color: #fff; padding: 10px; text-align: center; }
+h1 { margin: 0; }
+.container { padding: 20px; max-width: 1200px; margin: auto; }
+input, button, select, textarea { padding: 5px; margin: 5px 0; }
+.repo, .file { background: #fff; padding: 10px; margin: 10px 0; border-radius: 5px; }
+textarea { width: 100%; height: 150px; }
+iframe { width: 100%; height: 300px; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<header>
+<h1>GitHi</h1>
+<p id="domain"></p>
+</header>
+<div class="container">
+
+<div id="userSection">
+<h2>Введіть ім’я користувача</h2>
+<input type="text" id="username" placeholder="Імʼя користувача">
+<button onclick="registerUser()">Зареєструвати</button>
+</div>
+
+<div id="mainSection" style="display:none;">
+<h2>Ваші репозиторії</h2>
+<input type="text" id="repoName" placeholder="Нова назва репозиторію">
+<button onclick="createRepo()">Створити репозиторій</button>
+<div id="repoList"></div>
+
+<hr>
+
+<h2>Codespace</h2>
+<select id="fileLang">
+<option value="html">HTML</option>
+<option value="css">CSS</option>
+<option value="js">JavaScript</option>
+<option value="txt">Інші файли</option>
+</select>
+<input type="text" id="fileName" placeholder="Назва файлу">
+<textarea id="fileContent" placeholder="Код тут..."></textarea>
+<button onclick="addFile()">Додати файл</button>
+<button onclick="runHTML()">Запустити HTML</button>
+<button onclick="downloadZip()">Створити ZIP</button>
+
+<h3>Файли репозиторію</h3>
+<div id="fileList"></div>
+
+<h3>Попередній перегляд HTML</h3>
+<iframe id="preview"></iframe>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+let user = '';
+let repos = [];
+
+function registerUser() {
+    const uname = document.getElementById('username').value.trim();
+    if(!uname) { alert('Введіть імʼя!'); return; }
+    user = uname;
+    document.getElementById('domain').innerText = `GitHi-${user}.tk`;
+    document.getElementById('userSection').style.display = 'none';
+    document.getElementById('mainSection').style.display = 'block';
+    loadRepos();
+}
+
+function createRepo() {
+    const rname = document.getElementById('repoName').value.trim();
+    if(!rname) { alert('Введіть назву репозиторію!'); return; }
+    repos.push({name:rname, files:[]});
+    saveRepos();
+    loadRepos();
+}
+
+function loadRepos() {
+    const list = document.getElementById('repoList');
+    list.innerHTML = '';
+    repos.forEach((r,i) => {
+        const div = document.createElement('div');
+        div.className = 'repo';
+        div.innerHTML = `<b>${r.name}</b> <button onclick="selectRepo(${i})">Відкрити</button>`;
+        list.appendChild(div);
+    });
+}
+
+let currentRepo = -1;
+function selectRepo(idx) {
+    currentRepo = idx;
+    renderFiles();
+}
+
+function addFile() {
+    if(currentRepo===-1){ alert('Виберіть репозиторій!'); return; }
+    const fname = document.getElementById('fileName').value.trim();
+    const flang = document.getElementById('fileLang').value;
+    const fcontent = document.getElementById('fileContent').value;
+    if(!fname){ alert('Введіть назву файлу!'); return; }
+    repos[currentRepo].files.push({name:fname, lang:flang, content:fcontent});
+    saveRepos();
+    renderFiles();
+}
+
+function renderFiles() {
+    const list = document.getElementById('fileList');
+    list.innerHTML = '';
+    if(currentRepo===-1) return;
+    repos[currentRepo].files.forEach((f,i)=>{
+        const div = document.createElement('div');
+        div.className='file';
+        div.innerHTML = `<b>${f.name}.${f.lang}</b> <button onclick="editFile(${i})">Редагувати</button>`;
+        list.appendChild(div);
+    });
+}
+
+function editFile(idx){
+    const f = repos[currentRepo].files[idx];
+    document.getElementById('fileName').value=f.name;
+    document.getElementById('fileLang').value=f.lang;
+    document.getElementById('fileContent').value=f.content;
+}
+
+function runHTML() {
+    if(currentRepo===-1) { alert('Виберіть репозиторій!'); return; }
+    const htmlFiles = repos[currentRepo].files.filter(f=>f.lang==='html');
+    let code = htmlFiles.map(f=>f.content).join('\n');
+    document.getElementById('preview').srcdoc = code;
+}
+
+function saveRepos() {
+    localStorage.setItem('gitHiRepos', JSON.stringify(repos));
+}
+
+function loadReposStorage() {
+    const data = localStorage.getItem('gitHiRepos');
+    if(data) repos = JSON.parse(data);
+}
+loadReposStorage();
+loadRepos();
+
+function downloadZip() {
+    if(currentRepo===-1){ alert('Виберіть репозиторій!'); return; }
+    const zip = new JSZip();
+    repos[currentRepo].files.forEach(f=>{
+        zip.file(`${f.name}.${f.lang}`, f.content);
+    });
+    zip.generateAsync({type:"blob"}).then(function(content){
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = `${repos[currentRepo].name}.zip`;
+        a.click();
+    });
+}
+</script>
+</body>
+</html>
