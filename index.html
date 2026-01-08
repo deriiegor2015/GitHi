@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>GitHi</title>
+<title>GitHi 2026</title>
 <style>
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; }
 header { background: #24292e; color: #fff; padding: 10px; text-align: center; }
@@ -12,12 +12,13 @@ input, button, select, textarea { padding: 5px; margin: 5px 0; }
 .repo, .file { background: #fff; padding: 10px; margin: 10px 0; border-radius: 5px; }
 textarea { width: 100%; height: 150px; }
 iframe { width: 100%; height: 300px; border: 1px solid #ccc; }
+.private { color: red; font-weight: bold; }
 </style>
 </head>
 <body>
 <header>
-<h1>GitHi</h1>
-<p id="domain"></p>
+<h1>GitHi 2026</h1>
+<p id="domain">Без домену</p>
 </header>
 <div class="container">
 
@@ -30,6 +31,10 @@ iframe { width: 100%; height: 300px; border: 1px solid #ccc; }
 <div id="mainSection" style="display:none;">
 <h2>Ваші репозиторії</h2>
 <input type="text" id="repoName" placeholder="Нова назва репозиторію">
+<select id="repoAccess">
+<option value="public">Публічний</option>
+<option value="private">Приватний</option>
+</select>
 <button onclick="createRepo()">Створити репозиторій</button>
 <div id="repoList"></div>
 
@@ -64,7 +69,6 @@ function registerUser() {
     const uname = document.getElementById('username').value.trim();
     if(!uname) { alert('Введіть імʼя!'); return; }
     user = uname;
-    document.getElementById('domain').innerText = `GitHi-${user}.tk`;
     document.getElementById('userSection').style.display = 'none';
     document.getElementById('mainSection').style.display = 'block';
     loadRepos();
@@ -72,8 +76,9 @@ function registerUser() {
 
 function createRepo() {
     const rname = document.getElementById('repoName').value.trim();
+    const access = document.getElementById('repoAccess').value;
     if(!rname) { alert('Введіть назву репозиторію!'); return; }
-    repos.push({name:rname, files:[]});
+    repos.push({name:rname, access:access, files:[]});
     saveRepos();
     loadRepos();
 }
@@ -82,9 +87,10 @@ function loadRepos() {
     const list = document.getElementById('repoList');
     list.innerHTML = '';
     repos.forEach((r,i) => {
+        const accessLabel = r.access === 'private' ? '<span class="private">[Приватний]</span>' : '';
         const div = document.createElement('div');
         div.className = 'repo';
-        div.innerHTML = `<b>${r.name}</b> <button onclick="selectRepo(${i})">Відкрити</button>`;
+        div.innerHTML = `<b>${r.name}</b> ${accessLabel} <button onclick="selectRepo(${i})">Відкрити</button>`;
         list.appendChild(div);
     });
 }
@@ -159,3 +165,4 @@ function downloadZip() {
 </script>
 </body>
 </html>
+
